@@ -33,6 +33,7 @@ export default function BookPage() {
   const [booking, setBooking] = useState(false);
   const [success, setSuccess] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
+  const [confirmedEmail, setConfirmedEmail] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -87,6 +88,7 @@ export default function BookPage() {
         setErrors({ submit: data.error });
       } else {
         setBookingRef(data.bookingReference);
+        setConfirmedEmail(form.email);
         setSuccess(true);
       }
     } catch {
@@ -104,15 +106,15 @@ export default function BookPage() {
     );
   }
 
-  if (success) {
-    // Redirect to payment
-    router.push(`/payment?ref=${bookingRef}&amount=${totalPrice}`);
-    return null;
-  }
-
   if (flights.length === 0) return null;
 
   const totalPrice = flights.reduce((s, f) => s + f.price, 0) * pax;
+
+  if (success) {
+    // Redirect to payment
+    router.push(`/payment?ref=${bookingRef}&amount=${totalPrice}&email=${encodeURIComponent(confirmedEmail)}`);
+    return null;
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 pt-2">

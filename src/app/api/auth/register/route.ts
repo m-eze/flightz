@@ -6,25 +6,28 @@ export async function POST(req: NextRequest) {
   try {
     const { name, email, password } = await req.json();
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "Email and password required" }, { status: 400 });
+    if (!name || !email || !password) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
-    }
+    // First user becomes admin (if ADMIN_SECRET is set and password matches)
+    const isFirstUser = (await prisma.user.count()) === 0;
+    const adminSecret = process.env.ADMIN_SECRET;
+    const isAdminPassword = adminSecret && password === adminSecret;
+    const role = isFirstUser || isAdminPassword ? "admin" : "user";
 
+    // Check existing user
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
-      return NextResponse.json({ error: "Email already registered" }, { status: 400 });
+      return NextResponse.json({ error: "Email already registered" }, { status: 409 });
     }
 
     const passwordHash = await hash(password, 12);
     const user = await prisma.user.create({
-      data: { email, name: name || null, passwordHash },
+      data: { name, email, passwordHash, role },
     });
 
-    return NextResponse.json({ id: user.id, email: user.email });
+    return NextResponse.json({ id: user.id, email: user.email, role: user.role });
   } catch (error) {
     console.error("Register error:", error);
     return NextResponse.json({ error: "Registration failed" }, { status: 500 });

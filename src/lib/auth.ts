@@ -45,9 +45,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
+        const dbUser = await prisma.user.findUnique({ where: { id: user.id as string } });
+        token.role = dbUser?.role || "user";
       }
       if (account?.provider === "google") {
-        // Upsert Google user
         const dbUser = await prisma.user.upsert({
           where: { email: token.email! },
           update: { name: token.name!, image: token.picture },
@@ -55,15 +56,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: token.email!,
             name: token.name!,
             image: token.picture,
+            role: "user",
           },
         });
         token.id = dbUser.id;
+        token.role = dbUser.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id as string;
+        (session.user as any).role = token.role as string;
       }
       return session;
     },

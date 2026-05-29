@@ -6,6 +6,17 @@ datasource db {
   provider = "sqlite"
 }
 
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  image        String?
+  passwordHash String?
+  role         String    @default("user")
+  createdAt    DateTime  @default(now())
+  bookings     Booking[]
+}
+
 model Airline {
   id      String   @id @default(cuid())
   name    String   @unique
@@ -89,14 +100,4 @@ model BookingLeg {
   flight    Flight  @relation(fields: [flightId], references: [id])
   legOrder  Int
   legType   String  @default("outbound")
-}
-
-model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  name         String?
-  passwordHash String?
-  image        String?
-  bookings     Booking[]
-  createdAt    DateTime  @default(now())
 }
