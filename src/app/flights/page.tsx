@@ -165,7 +165,7 @@ export function FlightsPageContent() {
       }
     }
     fetchAll();
-  }, [tripType, searchParams, pax, sortBy, airlineFilter]);
+  }, [tripType, searchParams, pax, sortBy, airlineFilter, router]);
 
   const selectFlight = (legIdx: number, flightId: string) => {
     setLegResults((prev) =>

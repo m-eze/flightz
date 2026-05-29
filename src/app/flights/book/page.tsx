@@ -3,7 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { formatPrice, formatDuration, formatTime, formatDate } from "@/lib/utils";
 
 interface FlightDetail {
@@ -26,23 +26,24 @@ export function BookFlightsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const ids = (searchParams.get("ids") || "").split(",");
+  const ids = (searchParams.get("ids") || "").split(",").filter(Boolean);
   const tripType = searchParams.get("trip") || "oneway";
   const pax = parseInt(searchParams.get("pax") || "1");
 
   const [flights, setFlights] = useState<FlightDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [bookingRef, setBookingRef] = useState("");
-  const [confirmedEmail, setConfirmedEmail] = useState("");
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
 
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-  });
+  const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Handle all redirects via useEffect to avoid "setState during render"
+  useEffect(() => {
+    if (redirectTo) {
+      router.push(redirectTo);
+    }
+  }, [redirectTo, router]);
 
   useEffect(() => {
     async function load() {
@@ -51,16 +52,20 @@ export function BookFlightsPageContent() {
           ids.map((id) => fetch(`/api/flights/${id}`).then((r) => r.json()))
         );
         const valid = results.filter((f) => !f.error);
-        if (valid.length === 0) router.push("/flights");
+        if (valid.length === 0) {
+          setRedirectTo("/flights");
+          return;
+        }
         setFlights(valid);
       } catch {
-        router.push("/flights");
+        setRedirectTo("/flights");
       } finally {
         setLoading(false);
       }
     }
-    load();
-  }, [ids.join(","), router]);
+    if (ids.length > 0) load();
+    else setLoading(false);
+  }, [ids.join(",")]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,9 +94,8 @@ export function BookFlightsPageContent() {
       if (data.error) {
         setErrors({ submit: data.error });
       } else {
-        setBookingRef(data.bookingReference);
-        setConfirmedEmail(form.email);
-        setSuccess(true);
+        const totalPrice = flights.reduce((s, f) => s + f.price, 0) * pax;
+        setRedirectTo(`/payment?ref=${data.bookingReference}&amount=${totalPrice}&email=${encodeURIComponent(form.email)}`);
       }
     } catch {
       setErrors({ submit: "Booking failed. Please try again." });
@@ -112,16 +116,8 @@ export function BookFlightsPageContent() {
 
   const totalPrice = flights.reduce((s, f) => s + f.price, 0) * pax;
 
-  if (success) {
-    // Redirect to payment
-    router.push(`/payment?ref=${bookingRef}&amount=${totalPrice}&email=${encodeURIComponent(confirmedEmail)}`);
-    return null;
-  }
-
   return (
     <main className="min-h-screen bg-gray-50 pt-2">
-
-
       <div className="max-w-3xl mx-auto px-6 py-8">
         <h1 className="text-2xl font-bold mb-2">Complete Your Booking</h1>
         <p className="text-gray-500 mb-6">
