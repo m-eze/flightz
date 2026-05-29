@@ -9,6 +9,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const paystackPublicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
+
   return (
     <html lang="en">
       <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
@@ -16,6 +18,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Navbar />
           {children}
         </SessionProvider>
+        {paystackPublicKey && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `window.__PAYSTACK_PUBLIC_KEY__ = "${paystackPublicKey}";`,
+            }}
+          />
+        )}
       </body>
     </html>
   );

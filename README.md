@@ -14,7 +14,8 @@ A modern one-stop flight reservation and booking platform for Nigerian domestic 
 - **Email Notifications** — Booking confirmation via Resend (stubbed, ready to activate)
 - **18 Nigerian Airlines** seeded with realistic route data (Air Peace, Arik Air, Ibom Air, Max Air, etc.)
 - **22 Airports** covering all major Nigerian cities
-- **462 Routes** with realistic pricing based on distance
+- **462 Routes** covering all airport pairs with realistic distance-based pricing
+- **44K+ Scheduled Flights** across 14 days on all routes
 
 ## Tech Stack
 
@@ -48,7 +49,7 @@ cp .env.example .env.local
 ```bash
 npx prisma generate
 npx prisma db push
-npx tsx prisma/seed.ts
+npx prisma db seed
 ```
 
 ### Run dev server
@@ -100,6 +101,33 @@ Air Peace · Arik Air · Aero Contractors · Max Air · Azman Air · Ibom Air ·
 ## Airports
 
 LOS (Lagos) · ABV (Abuja) · KAN (Kano) · PHC (Port Harcourt) · ENU (Enugu) · QUO (Uyo) · CBQ (Calabar) · BNI (Benin) · QOW (Owerri) · ILR (Ilorin) · IBA (Ibadan) · JOS (Jos) · KAD (Kaduna) · AKR (Akure) · ABB (Asaba) · MDG (Maiduguri) · SKO (Sokoto) · YOL (Yola) · WAR (Warri) · GMO (Gombe) · BCU (Bauchi) · DKA (Katsina)
+
+## Deployment
+
+### Vercel + Neon (recommended)
+
+1. Push to GitHub
+2. Import repo in Vercel, set framework to Next.js
+3. Create a Neon PostgreSQL database at [neon.tech](https://neon.tech)
+4. Set environment variables in Vercel (see `.env.production.example`)
+5. After deploy, run seed: `npx prisma db push --accept-data-loss && npx prisma db seed`
+
+### Required env vars
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Neon PostgreSQL connection string |
+| `NEXTAUTH_SECRET` | Auth encryption (`openssl rand -base64 32`) |
+| `NEXTAUTH_URL` | Your production URL |
+| `PAYSTACK_SECRET_KEY` | Paystack secret key |
+| `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` | Paystack public key |
+| `NEXT_PUBLIC_APP_URL` | Same as NEXTAUTH_URL |
+
+### Optional
+| Variable | Purpose |
+|---|---|
+| `RESEND_API_KEY` | Email confirmations |
+| `GOOGLE_CLIENT_ID` / `SECRET` | Social login |
+| `ADMIN_SECRET` | Override admin registration password |
 
 ## License
 

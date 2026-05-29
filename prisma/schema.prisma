@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
@@ -49,6 +50,7 @@ model Route {
   destination     Airport @relation("DestinationRoutes", fields: [destinationId], references: [id])
   distance        Int?
   flights         Flight[]
+  @@unique([originId, destinationId])
 }
 
 model Flight {
@@ -72,6 +74,11 @@ model Flight {
   status          String    @default("scheduled")
   bookingLegs     BookingLeg[]
   createdAt       DateTime  @default(now())
+
+  @@index([originId, destinationId, departureTime])
+  @@index([airlineId])
+  @@index([departureTime])
+  @@index([price])
 }
 
 model Booking {
@@ -90,6 +97,11 @@ model Booking {
   tripType         String       @default("oneway")
   legs             BookingLeg[]
   createdAt        DateTime     @default(now())
+
+  @@index([userId])
+  @@index([passengerEmail])
+  @@index([createdAt])
+  @@index([status])
 }
 
 model BookingLeg {
@@ -100,4 +112,7 @@ model BookingLeg {
   flight    Flight  @relation(fields: [flightId], references: [id])
   legOrder  Int
   legType   String  @default("outbound")
+
+  @@index([bookingId])
+  @@index([flightId])
 }

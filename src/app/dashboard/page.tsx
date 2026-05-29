@@ -26,6 +26,7 @@ interface BookingItem {
   passengers: number;
   totalPrice: number;
   status: string;
+  paymentStatus: string;
   tripType: string;
   createdAt: string;
   legs: LegInfo[];
@@ -121,13 +122,17 @@ export default function DashboardPage() {
                     </div>
                     <p className="text-xs text-gray-500">Booked {formatDate(b.createdAt)}</p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    b.status === "confirmed" ? "bg-green-100 text-green-700" :
-                    b.status === "cancelled" ? "bg-red-100 text-red-700" :
-                    "bg-gray-100 text-gray-700"
-                  }`}>
-                    {b.status.toUpperCase()}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      b.status === "cancelled" ? "bg-red-100 text-red-700" :
+                      b.paymentStatus === "paid" ? "bg-green-100 text-green-700" :
+                      "bg-yellow-100 text-yellow-700"
+                    }`}>
+                      {b.status === "cancelled" ? "CANCELLED" : b.paymentStatus === "paid" ? "PAID" : "UNPAID"}
+                    </span>
+                    <button onClick={() => router.push(`/dashboard/${b.id}`)}
+                      className="text-xs text-indigo-600 hover:underline whitespace-nowrap">View →</button>
+                  </div>
                 </div>
 
                 {/* Flight legs */}

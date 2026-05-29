@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
 // PostgreSQL (Neon) — DATABASE_URL must be set in .env.local
-// Example: DATABASE_URL="postgresql://user:pass@ep-xxx.aws.neon.net/nflightz?sslmode=require"
+// Example: DATABASE_URL="postgresql://user:***@ep-xxx.aws.neon.net/nflightz?sslmode=require"
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -16,6 +16,9 @@ if (!databaseUrl) {
 }
 
 export default defineConfig({
+  migrations: {
+    seed: "npx tsx ./prisma/seed.ts",
+  },
   datasource: {
     url: databaseUrl,
   },

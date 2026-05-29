@@ -14,8 +14,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Reference required" }, { status: 400 });
     }
 
-    // If Paystack key is set, verify with Paystack; otherwise trust the callback
-    if (PAYSTACK_SECRET) {
+    // Only verify with Paystack if we have a real secret key (not a placeholder)
+    const isRealKey = PAYSTACK_SECRET && !PAYSTACK_SECRET.startsWith("sk_live_...") && !PAYSTACK_SECRET.startsWith("sk_test_dummy") && PAYSTACK_SECRET.length > 20;
+
+    if (isRealKey) {
       const res = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
         headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` },
       });
@@ -25,6 +27,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Payment not verified" }, { status: 400 });
       }
     }
+    // Otherwise: test mode — trust the booking reference directly
 
     // Update booking payment status
     const booking = await prisma.booking.findUnique({
