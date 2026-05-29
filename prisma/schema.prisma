@@ -65,12 +65,16 @@ model Flight {
 
 model Booking {
   id               String       @id @default(cuid())
+  userId           String?
+  user             User?        @relation(fields: [userId], references: [id])
   passengerName    String
   passengerEmail   String
   passengerPhone   String?
   passengers       Int          @default(1)
   totalPrice       Float
   status           String       @default("confirmed")
+  paymentStatus    String       @default("unpaid")
+  paymentRef       String?
   bookingReference String       @unique
   tripType         String       @default("oneway")
   legs             BookingLeg[]
@@ -85,4 +89,14 @@ model BookingLeg {
   flight    Flight  @relation(fields: [flightId], references: [id])
   legOrder  Int
   legType   String  @default("outbound")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  passwordHash String?
+  image        String?
+  bookings     Booking[]
+  createdAt    DateTime  @default(now())
 }

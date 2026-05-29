@@ -105,46 +105,9 @@ export default function BookPage() {
   }
 
   if (success) {
-    return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
-          <div className="text-5xl mb-4">🎉</div>
-          <h1 className="text-2xl font-bold mb-2">Booking Confirmed!</h1>
-          <p className="text-gray-500 mb-6">
-            Reference: <strong className="text-indigo-600">{bookingRef}</strong>
-          </p>
-          <div className="bg-gray-50 rounded-lg p-4 text-left text-sm mb-6 space-y-3">
-            {flights.map((f, i) => (
-              <div key={f.id} className="pb-3 border-b border-gray-200 last:border-0 last:pb-0">
-                <div className="flex items-center gap-1 mb-1">
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                    i === 0 ? "bg-indigo-100 text-indigo-700" :
-                    tripType === "return" && i === 1 ? "bg-amber-100 text-amber-700" :
-                    "bg-green-100 text-green-700"
-                  }`}>
-                    {tripType === "return" ? (i === 0 ? "OUT" : "RET") : `LEG ${i + 1}`}
-                  </span>
-                  <span className="font-medium">{f.airline.name} · {f.flightNumber}</span>
-                </div>
-                <p className="text-gray-500">
-                  {f.origin.city} ({f.origin.code}) → {f.destination.city} ({f.destination.code})
-                  {" · "}{formatDate(f.departureTime)} · {formatTime(f.departureTime)} — {formatTime(f.arrivalTime)}
-                </p>
-              </div>
-            ))}
-            <div className="pt-2 font-medium text-right">
-              Total: <span className="text-indigo-600">{formatPrice(flights.reduce((s, f) => s + f.price, 0) * pax)}</span>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <button onClick={() => router.push("/")}
-              className="flex-1 bg-gray-100 hover:bg-gray-200 py-2 rounded-lg text-sm transition">New Search</button>
-            <button onClick={() => router.push("/dashboard")}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm transition">My Bookings</button>
-          </div>
-        </div>
-      </main>
-    );
+    // Redirect to payment
+    router.push(`/payment?ref=${bookingRef}&amount=${totalPrice}`);
+    return null;
   }
 
   if (flights.length === 0) return null;
@@ -152,12 +115,8 @@ export default function BookPage() {
   const totalPrice = flights.reduce((s, f) => s + f.price, 0) * pax;
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-3xl mx-auto px-6 py-3">
-          <a href="/" className="text-xl font-bold text-indigo-600">✈️ Flightz</a>
-        </div>
-      </div>
+    <main className="min-h-screen bg-gray-50 pt-2">
+
 
       <div className="max-w-3xl mx-auto px-6 py-8">
         <h1 className="text-2xl font-bold mb-2">Complete Your Booking</h1>

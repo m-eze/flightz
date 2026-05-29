@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 function generateRef(): string {
@@ -84,6 +85,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // Get authenticated user
+    const session = await auth();
+    const userId = session?.user ? (session.user as any).id : null;
+
     // Support both old single-flight and new multi-flight
     const ids: string[] = flightIds || (flightId ? [flightId] : []);
     if (ids.length === 0) {
@@ -134,6 +139,7 @@ export async function POST(req: NextRequest) {
           bookingReference,
           status: "confirmed",
           tripType: tripType || "oneway",
+          userId,
         },
       }),
     ];
@@ -149,6 +155,7 @@ export async function POST(req: NextRequest) {
           bookingReference,
           status: "confirmed",
           tripType: tripType || "oneway",
+          userId,
         },
       });
 
