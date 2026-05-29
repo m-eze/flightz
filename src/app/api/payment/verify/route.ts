@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmationEmail } from "@/lib/email";
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY || "";
 
 export async function POST(req: NextRequest) {

@@ -1,9 +1,9 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
-export default function PaymentCallbackPage() {
+export function PaymentCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const reference = searchParams.get("reference") || searchParams.get("trxref") || "";
@@ -69,5 +69,17 @@ export default function PaymentCallbackPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function PaymentCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full" />
+      </div>
+    }>
+      <PaymentCallbackContent />
+    </Suspense>
   );
 }

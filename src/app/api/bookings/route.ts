@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 function generateRef(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   return "NFL-" + Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");

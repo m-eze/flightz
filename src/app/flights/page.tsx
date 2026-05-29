@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { formatPrice, formatDuration, formatTime, formatDate } from "@/lib/utils";
 
 interface Airline {
@@ -86,7 +86,7 @@ function FlightCard({ flight, selected, onSelect }: { flight: Flight; selected: 
   );
 }
 
-export default function FlightsPage() {
+export function FlightsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const tripType = searchParams.get("trip") || "oneway";
@@ -329,5 +329,17 @@ export default function FlightsPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function FlightsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full" />
+      </div>
+    }>
+      <FlightsPageContent />
+    </Suspense>
   );
 }

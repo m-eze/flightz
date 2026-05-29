@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { formatPrice, formatDuration, formatTime, formatDate, generateBookingReference } from "@/lib/utils";
 
 interface FlightDetail {
@@ -20,7 +20,7 @@ interface FlightDetail {
   status: string;
 }
 
-export default function BookPage() {
+export function BookPageContent() {
   const { id } = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -219,5 +219,17 @@ export default function BookPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function BookPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full" />
+      </div>
+    }>
+      <BookPageContent />
+    </Suspense>
   );
 }

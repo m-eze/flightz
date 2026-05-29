@@ -1,27 +1,26 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { Suspense, useState } from "react";
 import { formatPrice } from "@/lib/utils";
 
 declare global {
   interface Window {
-    PaystackPop?: new (key: string) => {
-      new (key: string): {
-        checkout: (args: {
-          key: string;
-          email: string;
-          amount: number;
-          reference: string;
-          callback: (response: { reference: string }) => void;
-          onClose: () => void;
-        }) => void;
-      };
+    PaystackPop?: {
+      setup: (args: {
+        key: string;
+        email: string;
+        amount: number;
+        ref?: string;
+        currency?: string;
+        callback: (response: { reference: string }) => void;
+        onClose: () => void;
+      }) => { openIframe: () => void };
     };
   }
 }
 
-export default function PaymentPage() {
+export function PaymentContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const ref = searchParams.get("ref") || "";
@@ -45,17 +44,15 @@ export default function PaymentPage() {
     setError("");
 
     try {
-      // Try real Paystack
       await loadPaystack();
       const publicKey = (window as any).__PAYSTACK_PUBLIC_KEY__ || "";
 
       if (publicKey && window.PaystackPop) {
-        const handler = new window.PaystackPop();
-        handler.checkout({
+        const handler = window.PaystackPop.setup({
           key: publicKey,
           email,
-          amount,
-          reference: ref,
+          amount: amount * 100, // Paystack expects kobo
+          ref,
           callback: (res: { reference: string }) => {
             fetch("/api/payment/verify", {
               method: "POST",
@@ -65,6 +62,7 @@ export default function PaymentPage() {
           },
           onClose: () => setPaying(false),
         });
+        handler.openIframe();
       } else {
         // Fallback: simulated payment
         await new Promise((r) => setTimeout(r, 2000));
@@ -151,5 +149,17 @@ export default function PaymentPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full" />
+      </div>
+    }>
+      <PaymentContent />
+    </Suspense>
   );
 }
