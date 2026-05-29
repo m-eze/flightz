@@ -53,6 +53,7 @@ export function BookPageContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
+
     if (!form.name.trim()) newErrors.name = "Full name is required";
     if (!form.email.trim() || !form.email.includes("@")) newErrors.email = "Valid email is required";
 
@@ -105,10 +106,21 @@ export function BookPageContent() {
           </p>
           {flight && (
             <div className="bg-gray-50 rounded-lg p-4 text-left text-sm mb-6">
-              <p className="font-medium">{flight.airline.name} · {flight.flightNumber}</p>
-              <p className="text-gray-500 mt-1">
-                {flight.origin.city} ({flight.origin.code}) → {flight.destination.city} ({flight.destination.code})
-              </p>
+              <div className="flex items-center space-x-3 mb-2">
+                {flight.airline.logo && (
+                  <img
+                    src={flight.airline.logo}
+                    alt={`${flight.airline.name} logo`}
+                    className="w-8 h-8 object-contain"
+                  />
+                )}
+                <div>
+                  <p className="font-medium">{flight.airline.name} · {flight.flightNumber}</p>
+                  <p className="text-gray-500 mt-1">
+                    {flight.origin.city} ({flight.origin.code}) → {flight.destination.city} ({flight.destination.code})
+                  </p>
+                </div>
+              </div>
               <p className="text-gray-500">
                 {formatDate(flight.departureTime)} · {formatTime(flight.departureTime)} — {formatTime(flight.arrivalTime)} · {formatDuration(flight.duration)}
               </p>
@@ -148,30 +160,41 @@ export function BookPageContent() {
           <h2 className="font-semibold mb-3">Flight Details</h2>
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium">{flight.airline.name}</p>
-              <p className="text-sm text-gray-500">{flight.flightNumber} · {flight.aircraft}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-indigo-600">{formatPrice(totalPrice)}</p>
-              <p className="text-xs text-gray-400">for {pax} passenger{pax > 1 ? "s" : ""}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-100">
-            <div>
-              <p className="text-xl font-bold">{formatTime(flight.departureTime)}</p>
-              <p className="text-sm text-gray-500">{flight.origin.code} · {flight.origin.city}</p>
-            </div>
-            <div className="flex-1 text-center">
-              <p className="text-xs text-gray-400">{formatDuration(flight.duration)}</p>
-              <div className="flex items-center gap-1 justify-center">
-                <div className="w-12 h-px bg-gray-300" />
-                <div className="w-2 h-2 rounded-full bg-indigo-500" />
-                <div className="w-12 h-px bg-gray-300" />
+              <div className="flex items-center space-x-2">
+                {flight.airline.logo && (
+                  <img
+                    src={flight.airline.logo}
+                    alt={`${flight.airline.name} logo`}
+                    className="w-6 h-6 object-contain"
+                  />
+                )}
+                <div>
+                  <p className="font-medium">{flight.airline.name}</p>
+                  <p className="text-sm text-gray-500">{flight.flightNumber} · {flight.aircraft}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-indigo-600">{formatPrice(totalPrice)}</p>
+                <p className="text-xs text-gray-400">for {pax} passenger{pax > 1 ? "s" : ""}</p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-xl font-bold">{formatTime(flight.arrivalTime)}</p>
-              <p className="text-sm text-gray-500">{flight.destination.code} · {flight.destination.city}</p>
+            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-100">
+              <div>
+                <p className="text-xl font-bold">{formatTime(flight.departureTime)}</p>
+                <p className="text-sm text-gray-500">{flight.origin.code} · {flight.origin.city}</p>
+              </div>
+              <div className="flex-1 text-center">
+                <p className="text-xs text-gray-400">{formatDuration(flight.duration)}</p>
+                <div className="flex items-center gap-1 justify-center">
+                  <div className="w-12 h-px bg-gray-300" />
+                  <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                  <div className="w-12 h-px bg-gray-300" />
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xl font-bold">{formatTime(flight.arrivalTime)}</p>
+                <p className="text-sm text-gray-500">{flight.destination.code} · {flight.destination.city}</p>
+              </div>
             </div>
           </div>
           <p className="text-xs text-gray-400 mt-3">{formatDate(flight.departureTime)} · {flight.availableSeats} seats remaining</p>
@@ -186,33 +209,47 @@ export function BookPageContent() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Full Name</label>
-              <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className={`w-full rounded-lg border ${errors.name ? "border-red-400" : "border-gray-200"} px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                placeholder="John Doe" />
+                placeholder="John Doe"
+              />
               {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Email</label>
-              <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className={`w-full rounded-lg border ${errors.email ? "border-red-400" : "border-gray-200"} px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500`}
-                placeholder="john@example.com" />
+                placeholder="john@example.com"
+              />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Phone (optional)</label>
-              <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="+234 800 000 0000" />
+                placeholder="+234 800 000 0000"
+              />
             </div>
           </div>
-
           <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Total</p>
               <p className="text-2xl font-bold text-indigo-600">{formatPrice(totalPrice)}</p>
             </div>
-            <button type="submit" disabled={booking}
-              className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold px-8 py-3 rounded-lg transition">
+            <button
+              type="submit"
+              disabled={booking}
+              className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold px-8 py-3 rounded-lg transition"
+            >
               {booking ? "Booking..." : "Confirm Booking"}
             </button>
           </div>

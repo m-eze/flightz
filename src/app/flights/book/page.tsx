@@ -139,7 +139,16 @@ export function BookFlightsPageContent() {
                   }`}>
                     {tripType === "return" ? (i === 0 ? "OUTBOUND" : "RETURN") : `LEG ${i + 1}`}
                   </span>
-                  <span className="font-medium text-sm">{flight.airline.name}</span>
+                  <div className="flex items-center space-x-2 mt-1">
+                    {flight.airline.logo && (
+                      <img
+                        src={flight.airline.logo}
+                        alt={`${flight.airline.name} logo`}
+                        className="w-6 h-6 object-contain"
+                      />
+                    )}
+                    <span className="font-medium text-sm">{flight.airline.name}</span>
+                  </div>
                   <span className="text-xs text-gray-500">{flight.flightNumber} · {flight.aircraft}</span>
                 </div>
                 <div className="flex items-center gap-4">

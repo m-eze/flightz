@@ -12,7 +12,7 @@ interface LegInfo {
     departureTime: string;
     arrivalTime: string;
     duration: number;
-    airline: { name: string };
+    airline: { name: string; logo: string | null };
     origin: { code: string; city: string };
     destination: { code: string; city: string };
   };
@@ -141,12 +141,23 @@ export default function DashboardPage() {
                     b.legs.map((leg, i) => {
                       const f = leg.flight;
                       return (
-                        <div key={i} className="p-3 bg-gray-50 rounded-lg flex items-center gap-4">
+                        <div className="p-3 bg-gray-50 rounded-lg flex items-center gap-4" key={i}>
                           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${legBadge(leg.legType)}`}>
                             {leg.legType}
                           </span>
-                          <div className="font-medium text-sm">{f.airline.name}</div>
-                          <div className="text-xs text-gray-500">{f.flightNumber}</div>
+                          <div className="flex items-center space-x-3">
+                            {f.airline.logo && (
+                              <img
+                                src={f.airline.logo}
+                                alt={`${f.airline.name} logo`}
+                                className="w-6 h-6 object-contain"
+                              />
+                            )}
+                            <div>
+                              <div className="font-medium text-sm">{f.airline.name}</div>
+                              <div className="text-xs text-gray-500">{f.flightNumber}</div>
+                            </div>
+                          </div>
                           <div className="flex-1 flex items-center justify-center gap-2">
                             <div className="text-right">
                               <p className="font-bold text-sm">{formatTime(f.departureTime)}</p>
@@ -168,8 +179,19 @@ export default function DashboardPage() {
                   ) : b.flight ? (
                     /* Backward compat: single flight */
                     <div className="p-3 bg-gray-50 rounded-lg flex items-center gap-4">
-                      <div className="font-medium text-sm">{b.flight.airline.name}</div>
-                      <div className="text-xs text-gray-500">{b.flight.flightNumber}</div>
+                      <div className="flex items-center space-x-3">
+                        {b.flight.airline.logo && (
+                          <img
+                            src={b.flight.airline.logo}
+                            alt={`${b.flight.airline.name} logo`}
+                            className="w-6 h-6 object-contain"
+                          />
+                        )}
+                        <div>
+                          <div className="font-medium text-sm">{b.flight.airline.name}</div>
+                          <div className="text-xs text-gray-500">{b.flight.flightNumber}</div>
+                        </div>
+                      </div>
                       <div className="flex-1 flex items-center justify-center gap-2">
                         <div className="text-right">
                           <p className="font-bold text-sm">{formatTime(b.flight.departureTime)}</p>

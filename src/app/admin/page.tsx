@@ -157,8 +157,17 @@ export default function AdminPage() {
                 <tbody>
                   {airlines.map((a: any) => (
                     <tr key={a.id} className="border-b border-gray-50 hover:bg-gray-50">
-                      <td className="px-6 py-3 text-sm font-medium">{a.name}</td>
-                      <td className="px-6 py-3 text-sm text-gray-500">{a.iata || "—"}</td>
+                      <td className="px-6 py-3 flex items-center space-x-3">
+                        {a.logo && (
+                          <img
+                            src={a.logo}
+                            alt={`${a.name} logo`}
+                            className="w-6 h-6 object-contain"
+                          />
+                        )}
+                        <span className="ml-2">{a.name}</span>
+                      </td>
+                      <td className="px-6 py-3 text-sm font-medium">{a.iata || "—"}</td>
                       <td className="px-6 py-3 text-sm text-right">{a._count.flights.toLocaleString()}</td>
                     </tr>
                   ))}
