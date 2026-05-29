@@ -21,21 +21,46 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
       take: 50,
       include: {
-        flight: {
-          select: {
-            flightNumber: true,
-            departureTime: true,
-            arrivalTime: true,
-            duration: true,
-            airline: { select: { name: true } },
-            origin: { select: { code: true, city: true } },
-            destination: { select: { code: true, city: true } },
+        legs: {
+          orderBy: { legOrder: "asc" },
+          include: {
+            flight: {
+              select: {
+                flightNumber: true,
+                departureTime: true,
+                arrivalTime: true,
+                duration: true,
+                airline: { select: { name: true } },
+                origin: { select: { code: true, city: true } },
+                destination: { select: { code: true, city: true } },
+              },
+            },
           },
         },
       },
     });
 
-    return NextResponse.json(bookings);
+    // Flatten for the dashboard's expected format
+    const flat = bookings.map((b) => ({
+      id: b.id,
+      bookingReference: b.bookingReference,
+      passengerName: b.passengerName,
+      passengerEmail: b.passengerEmail,
+      passengers: b.passengers,
+      totalPrice: b.totalPrice,
+      status: b.status,
+      tripType: b.tripType,
+      createdAt: b.createdAt,
+      legs: b.legs.map((l) => ({
+        legType: l.legType,
+        legOrder: l.legOrder,
+        flight: l.flight,
+      })),
+      // Backward compat: first flight info
+      flight: b.legs[0]?.flight || null,
+    }));
+
+    return NextResponse.json(flat);
   } catch (error) {
     console.error("GET bookings error:", error);
     return NextResponse.json({ error: "Failed to load bookings" }, { status: 500 });
@@ -45,29 +70,62 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { flightId, passengerName, passengerEmail, passengerPhone, passengers } = body;
+    const {
+      flightIds,
+      flightId,
+      tripType,
+      passengerName,
+      passengerEmail,
+      passengerPhone,
+      passengers,
+    } = body;
 
-    if (!flightId || !passengerName || !passengerEmail || !passengers) {
+    if (!passengerName || !passengerEmail || !passengers) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Get flight and verify availability
-    const flight = await prisma.flight.findUnique({ where: { id: flightId } });
-    if (!flight) {
-      return NextResponse.json({ error: "Flight not found" }, { status: 404 });
-    }
-    if (flight.availableSeats < passengers) {
-      return NextResponse.json({ error: "Not enough seats available" }, { status: 400 });
+    // Support both old single-flight and new multi-flight
+    const ids: string[] = flightIds || (flightId ? [flightId] : []);
+    if (ids.length === 0) {
+      return NextResponse.json({ error: "No flights provided" }, { status: 400 });
     }
 
-    const totalPrice = flight.price * passengers;
+    // Verify all flights exist and have enough seats
+    const flights = await Promise.all(
+      ids.map((id) => prisma.flight.findUnique({ where: { id } }))
+    );
+
+    const missingIdx = flights.findIndex((f) => !f);
+    if (missingIdx !== -1) {
+      return NextResponse.json({ error: `Flight not found: ${ids[missingIdx]}` }, { status: 404 });
+    }
+
+    for (const flight of flights) {
+      if (flight!.availableSeats < passengers) {
+        return NextResponse.json(
+          { error: `Not enough seats on ${flight!.flightNumber}` },
+          { status: 400 }
+        );
+      }
+    }
+
+    const totalPrice = flights.reduce((sum, f) => sum + f!.price * passengers, 0);
     const bookingReference = generateRef();
 
-    // Create booking and update seats in a transaction
-    const [booking] = await prisma.$transaction([
+    // Determine leg types
+    const legTypes: string[] = [];
+    if (ids.length === 1) {
+      legTypes.push("outbound");
+    } else if (tripType === "return") {
+      legTypes.push("outbound", "inbound");
+    } else {
+      legTypes.push("outbound", ...ids.slice(1).map(() => "connection"));
+    }
+
+    // Create booking with legs in a transaction
+    const txOps: any[] = [
       prisma.booking.create({
         data: {
-          flightId,
           passengerName,
           passengerEmail,
           passengerPhone: passengerPhone || null,
@@ -75,13 +133,44 @@ export async function POST(req: NextRequest) {
           totalPrice,
           bookingReference,
           status: "confirmed",
+          tripType: tripType || "oneway",
         },
       }),
-      prisma.flight.update({
-        where: { id: flightId },
-        data: { availableSeats: flight.availableSeats - passengers },
-      }),
-    ]);
+    ];
+
+    const booking = await prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.create({
+        data: {
+          passengerName,
+          passengerEmail,
+          passengerPhone: passengerPhone || null,
+          passengers,
+          totalPrice,
+          bookingReference,
+          status: "confirmed",
+          tripType: tripType || "oneway",
+        },
+      });
+
+      // Create legs and update seats
+      for (let i = 0; i < ids.length; i++) {
+        await tx.bookingLeg.create({
+          data: {
+            bookingId: booking.id,
+            flightId: ids[i],
+            legOrder: i + 1,
+            legType: legTypes[i],
+          },
+        });
+
+        await tx.flight.update({
+          where: { id: ids[i] },
+          data: { availableSeats: flights[i]!.availableSeats - passengers },
+        });
+      }
+
+      return booking;
+    });
 
     return NextResponse.json({ bookingReference, totalPrice, id: booking.id });
   } catch (error) {

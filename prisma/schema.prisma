@@ -59,20 +59,30 @@ model Flight {
   availableSeats  Int       @default(120)
   aircraft        String?
   status          String    @default("scheduled")
-  bookings        Booking[]
+  bookingLegs     BookingLeg[]
   createdAt       DateTime  @default(now())
 }
 
 model Booking {
-  id               String   @id @default(cuid())
-  flightId         String
-  flight           Flight   @relation(fields: [flightId], references: [id])
+  id               String       @id @default(cuid())
   passengerName    String
   passengerEmail   String
   passengerPhone   String?
-  passengers       Int      @default(1)
+  passengers       Int          @default(1)
   totalPrice       Float
-  status           String   @default("confirmed")
-  bookingReference String   @unique
-  createdAt        DateTime @default(now())
+  status           String       @default("confirmed")
+  bookingReference String       @unique
+  tripType         String       @default("oneway")
+  legs             BookingLeg[]
+  createdAt        DateTime     @default(now())
+}
+
+model BookingLeg {
+  id        String  @id @default(cuid())
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  flightId  String
+  flight    Flight  @relation(fields: [flightId], references: [id])
+  legOrder  Int
+  legType   String  @default("outbound")
 }
