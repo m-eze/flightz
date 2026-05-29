@@ -144,7 +144,49 @@ function FlightsPageContent() {
           setError(data.error);
           setLegResults([]);
         } else {
-          setLegResults(data.results || []);
+          // Transform flat flights API response into leg result format
+          const flights: Flight[] = data.flights || [];
+          const dateStr = searchParams.get("depart") || "";
+          const formattedDate = dateStr ? new Date(dateStr).toLocaleDateString("en-NG", {
+            weekday: "short", month: "short", day: "numeric", year: "numeric"
+          }) : "";
+
+          if (flights.length > 0) {
+            setLegResults([{
+              label: "Outbound",
+              from: searchParams.get("from") || "",
+              to: searchParams.get("to") || "",
+              date: formattedDate,
+              flights,
+              selected: null,
+            }]);
+          } else {
+            if (tripType === "return") {
+              const retDateStr = searchParams.get("return") || "";
+              setLegResults([
+                {
+                  label: "Outbound",
+                  from: searchParams.get("from") || "",
+                  to: searchParams.get("to") || "",
+                  date: formattedDate,
+                  flights: [],
+                  selected: null,
+                },
+                {
+                  label: "Return",
+                  from: searchParams.get("to") || "",
+                  to: searchParams.get("from") || "",
+                  date: retDateStr ? new Date(retDateStr).toLocaleDateString("en-NG", {
+                    weekday: "short", month: "short", day: "numeric", year: "numeric"
+                  }) : "",
+                  flights: [],
+                  selected: null,
+                },
+              ]);
+            } else {
+              setLegResults([]);
+            }
+          }
         }
       } catch (err) {
         setError("Failed to load flights");
@@ -159,15 +201,11 @@ function FlightsPageContent() {
     return () => clearTimeout(handler);
   }, [searchParams, sortBy, airlineFilter, pax, router]);
 
-  const handleSelectLeg = (leg: LegResult) => {
+  const handleSelectFlight = (legLabel: string, flightId: string) => {
     setLegResults(prev =>
       prev.map(l =>
-        l.label === leg.label
-          ? {
-              ...l,
-              selected:
-                l.selected === leg.flights[0]?.id ? null : leg.flights[0]?.id
-            }
+        l.label === legLabel
+          ? { ...l, selected: l.selected === flightId ? null : flightId }
           : l
       )
     );
@@ -483,7 +521,7 @@ function FlightsPageContent() {
                         key={flight.id}
                         flight={flight}
                         selected={flight.id === leg.selected}
-                        onSelect={() => handleSelectLeg(leg)}
+                        onSelect={() => handleSelectFlight(leg.label, flight.id)}
                       />
                     ))}
                   </div>
