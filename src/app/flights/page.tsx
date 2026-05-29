@@ -300,37 +300,6 @@ function FlightsPageContent() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-3">
-              <a href="/" className="text-xl font-bold text-indigo-600">
-                ✈️ NFlightz
-              </a>
-              <div className="hidden md:flex items-center space-x-4">
-                <a href="/auth/login" className="text-gray-600 hover:text-indigo-600">
-                  Login
-                </a>
-                <a href="/auth/register" className="text-gray-600 hover:text-indigo-600">
-                  Sign Up
-                </a>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <a href="/dashboard" className="text-gray-600 hover:text-indigo-600 hidden sm:inline">
-                My Bookings
-              </a>
-              <button
-                onClick={() => router.push("/auth/login")}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded transition"
-              >
-                Login
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Search Form */}
       <div className="py-8">
