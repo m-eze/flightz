@@ -86,7 +86,7 @@ export default function DashboardPage() {
 
         <form onSubmit={handleSearch} className="flex gap-3 mb-8">
           <input type="text" value={searchRef} onChange={(e) => setSearchRef(e.target.value)}
-            placeholder="Search by booking reference (e.g. FLZ-ABC123)"
+            placeholder="Search by booking reference (e.g. NFL-ABC123)"
             className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           <button type="submit" className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg text-sm hover:bg-indigo-700 transition">Search</button>
           {searchRef && (

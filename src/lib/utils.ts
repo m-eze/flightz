@@ -33,7 +33,7 @@ export function formatDate(date: Date | string): string {
 
 export function generateBookingReference(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let ref = "FLZ-";
+  let ref = "NFL-";
   for (let i = 0; i < 6; i++) {
     ref += chars[Math.floor(Math.random() * chars.length)];
   }

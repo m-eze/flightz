@@ -273,7 +273,7 @@ export default function HomePage() {
 
       {/* Features */}
       <section className="max-w-6xl mx-auto px-6 py-20">
-        <h3 className="text-2xl font-bold text-center mb-12">Why Flightz?</h3>
+        <h3 className="text-2xl font-bold text-center mb-12">Why NFlightz?</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             { icon: "🇳🇬", title: "All Nigerian Airlines", desc: "Air Peace, Arik Air, Ibom Air, Max Air, and 14+ more — all in one place." },
@@ -314,7 +314,7 @@ export default function HomePage() {
       </section>
 
       <footer className="border-t border-gray-200 bg-white py-8 text-center text-sm text-gray-400">
-        <p>✈️ Flightz — Nigeria&apos;s flight booking platform. Built with ❤️</p>
+        <p>✈️ NFlightz — Nigeria&apos;s flight booking platform. Built with ❤️</p>
       </footer>
     </main>
   );

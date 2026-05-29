@@ -1,4 +1,4 @@
-# Flightz — Nigerian Flight Booking App
+# NFlightz — Nigerian Flight Booking App
 
 A modern one-stop flight reservation and booking platform for Nigerian domestic flights. Like Kayak, but built for Nigeria.
 

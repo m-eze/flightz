@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 function generateRef(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  return "FLZ-" + Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  return "NFL-" + Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
 export async function GET(req: NextRequest) {

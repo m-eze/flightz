@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Flightz — Book Flights in Nigeria",
+  title: "NFlightz — Book Flights in Nigeria",
   description: "Search, compare and book flights across Nigeria. The smartest way to fly domestic.",
 };
 
