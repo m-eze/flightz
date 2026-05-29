@@ -120,7 +120,8 @@ function FlightsPageContent() {
   const from = searchParams.get("from") || "";
   const to = searchParams.get("to") || "";
   const depart = searchParams.get("depart") || "";
-  const searchKey = `${from}-${to}-${depart}-${sortBy}-${airlineFilter}-${pax}`;
+  const returnDate = searchParams.get("return") || "";
+  const searchKey = `${from}-${to}-${depart}-${returnDate}-${sortBy}-${airlineFilter}-${pax}`;
 
   // Handle all redirects via useEffect to avoid "setState during render"
   useEffect(() => {
@@ -135,47 +136,68 @@ function FlightsPageContent() {
         setLoading(true);
         setError("");
 
-        const params = new URLSearchParams();
-        params.append("from", from);
-        params.append("to", to);
-        params.append("depart", depart);
-        params.append("sort", sortBy);
-        params.append("airline", airlineFilter);
-        params.append("pax", pax.toString());
+        // Build outbound search params
+        const outParams = new URLSearchParams();
+        outParams.append("from", from);
+        outParams.append("to", to);
+        outParams.append("depart", depart);
+        outParams.append("sort", sortBy);
+        outParams.append("airline", airlineFilter);
+        outParams.append("pax", pax.toString());
 
-        const res = await fetch(`/api/flights/search?${params.toString()}`);
-        const data = await res.json();
+        // Fetch outbound flights
+        const outRes = await fetch(`/api/flights/search?${outParams.toString()}`);
+        const outData = await outRes.json();
 
-        if (data.error) {
-          setError(data.error);
+        if (outData.error) {
+          setError(outData.error);
           setLegResults([]);
-        } else {
-          const flights: Flight[] = data.flights || [];
-          const formattedDate = depart ? new Date(depart).toLocaleDateString("en-NG", {
+          return;
+        }
+
+        const outboundFlights: Flight[] = outData.flights || [];
+        const formattedOutDate = depart ? new Date(depart).toLocaleDateString("en-NG", {
+          weekday: "short", month: "short", day: "numeric", year: "numeric"
+        }) : "";
+
+        const legs: LegResult[] = [{
+          label: "Outbound",
+          from,
+          to,
+          date: formattedOutDate,
+          flights: outboundFlights,
+          selected: null,
+        }];
+
+        // For return trips, also fetch return flights
+        if (tripType === "return" && returnDate) {
+          const retParams = new URLSearchParams();
+          retParams.append("from", to);       // reversed
+          retParams.append("to", from);       // reversed
+          retParams.append("depart", returnDate);
+          retParams.append("sort", sortBy);
+          retParams.append("airline", airlineFilter);
+          retParams.append("pax", pax.toString());
+
+          const retRes = await fetch(`/api/flights/search?${retParams.toString()}`);
+          const retData = await retRes.json();
+
+          const returnFlights: Flight[] = retData.error ? [] : (retData.flights || []);
+          const formattedRetDate = returnDate ? new Date(returnDate).toLocaleDateString("en-NG", {
             weekday: "short", month: "short", day: "numeric", year: "numeric"
           }) : "";
 
-          if (flights.length > 0) {
-            setLegResults([{
-              label: "Outbound",
-              from,
-              to,
-              date: formattedDate,
-              flights,
-              selected: null,
-            }]);
-          } else {
-            if (tripType === "return") {
-              const retDateStr = searchParams.get("return") || "";
-              setLegResults([
-                { label: "Outbound", from, to, date: formattedDate, flights: [], selected: null },
-                { label: "Return", from: to, to: from, date: retDateStr ? new Date(retDateStr).toLocaleDateString("en-NG", { weekday: "short", month: "short", day: "numeric", year: "numeric" }) : "", flights: [], selected: null },
-              ]);
-            } else {
-              setLegResults([]);
-            }
-          }
+          legs.push({
+            label: "Return",
+            from: to,
+            to: from,
+            date: formattedRetDate,
+            flights: returnFlights,
+            selected: null,
+          });
         }
+
+        setLegResults(legs);
       } catch (err) {
         setError("Failed to load flights");
         setLegResults([]);
