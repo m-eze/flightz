@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Airline {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  iata    String?
+  icao    String?
+  logo    String?
+  hub     String?
+  country String   @default("Nigeria")
+  flights Flight[]
+}
+
+model Airport {
+  id      String   @id @default(cuid())
+  code    String   @unique
+  name    String
+  city    String
+  state   String
+  country String   @default("Nigeria")
+  departures Flight[] @relation("DepartureAirport")
+  arrivals   Flight[] @relation("ArrivalAirport")
+  routesFrom Route[] @relation("OriginRoutes")
+  routesTo   Route[] @relation("DestinationRoutes")
+}
+
+model Route {
+  id              String  @id @default(cuid())
+  originId        String
+  destinationId   String
+  origin          Airport @relation("OriginRoutes", fields: [originId], references: [id])
+  destination     Airport @relation("DestinationRoutes", fields: [destinationId], references: [id])
+  distance        Int?
+  flights         Flight[]
+}
+
+model Flight {
+  id              String    @id @default(cuid())
+  flightNumber    String    @unique
+  airlineId       String
+  airline         Airline   @relation(fields: [airlineId], references: [id])
+  routeId         String?
+  route           Route?    @relation(fields: [routeId], references: [id])
+  originId        String
+  destinationId   String
+  origin          Airport   @relation("DepartureAirport", fields: [originId], references: [id])
+  destination     Airport   @relation("ArrivalAirport", fields: [destinationId], references: [id])
+  departureTime   DateTime
+  arrivalTime     DateTime
+  duration        Int
+  price           Float
+  currency        String    @default("NGN")
+  availableSeats  Int       @default(120)
+  aircraft        String?
+  status          String    @default("scheduled")
+  bookings        Booking[]
+  createdAt       DateTime  @default(now())
+}
+
+model Booking {
+  id               String   @id @default(cuid())
+  flightId         String
+  flight           Flight   @relation(fields: [flightId], references: [id])
+  passengerName    String
+  passengerEmail   String
+  passengerPhone   String?
+  passengers       Int      @default(1)
+  totalPrice       Float
+  status           String   @default("confirmed")
+  bookingReference String   @unique
+  createdAt        DateTime @default(now())
+}
