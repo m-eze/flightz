@@ -116,6 +116,12 @@ function FlightsPageContent() {
   const [airlineFilter, setAirlineFilter] = useState("");
   const [redirectTo, setRedirectTo] = useState<string | null>(null);
 
+  // Stable search key to avoid re-fetching on every render
+  const from = searchParams.get("from") || "";
+  const to = searchParams.get("to") || "";
+  const depart = searchParams.get("depart") || "";
+  const searchKey = `${from}-${to}-${depart}-${sortBy}-${airlineFilter}-${pax}`;
+
   // Handle all redirects via useEffect to avoid "setState during render"
   useEffect(() => {
     if (redirectTo) {
@@ -130,9 +136,9 @@ function FlightsPageContent() {
         setError("");
 
         const params = new URLSearchParams();
-        params.append("from", searchParams.get("from") || "");
-        params.append("to", searchParams.get("to") || "");
-        params.append("depart", searchParams.get("depart") || "");
+        params.append("from", from);
+        params.append("to", to);
+        params.append("depart", depart);
         params.append("sort", sortBy);
         params.append("airline", airlineFilter);
         params.append("pax", pax.toString());
@@ -144,18 +150,16 @@ function FlightsPageContent() {
           setError(data.error);
           setLegResults([]);
         } else {
-          // Transform flat flights API response into leg result format
           const flights: Flight[] = data.flights || [];
-          const dateStr = searchParams.get("depart") || "";
-          const formattedDate = dateStr ? new Date(dateStr).toLocaleDateString("en-NG", {
+          const formattedDate = depart ? new Date(depart).toLocaleDateString("en-NG", {
             weekday: "short", month: "short", day: "numeric", year: "numeric"
           }) : "";
 
           if (flights.length > 0) {
             setLegResults([{
               label: "Outbound",
-              from: searchParams.get("from") || "",
-              to: searchParams.get("to") || "",
+              from,
+              to,
               date: formattedDate,
               flights,
               selected: null,
@@ -164,24 +168,8 @@ function FlightsPageContent() {
             if (tripType === "return") {
               const retDateStr = searchParams.get("return") || "";
               setLegResults([
-                {
-                  label: "Outbound",
-                  from: searchParams.get("from") || "",
-                  to: searchParams.get("to") || "",
-                  date: formattedDate,
-                  flights: [],
-                  selected: null,
-                },
-                {
-                  label: "Return",
-                  from: searchParams.get("to") || "",
-                  to: searchParams.get("from") || "",
-                  date: retDateStr ? new Date(retDateStr).toLocaleDateString("en-NG", {
-                    weekday: "short", month: "short", day: "numeric", year: "numeric"
-                  }) : "",
-                  flights: [],
-                  selected: null,
-                },
+                { label: "Outbound", from, to, date: formattedDate, flights: [], selected: null },
+                { label: "Return", from: to, to: from, date: retDateStr ? new Date(retDateStr).toLocaleDateString("en-NG", { weekday: "short", month: "short", day: "numeric", year: "numeric" }) : "", flights: [], selected: null },
               ]);
             } else {
               setLegResults([]);
@@ -196,10 +184,9 @@ function FlightsPageContent() {
       }
     }
 
-    // Debounce the search
     const handler = setTimeout(load, 300);
     return () => clearTimeout(handler);
-  }, [searchParams, sortBy, airlineFilter, pax, router]);
+  }, [searchKey, tripType]);
 
   const handleSelectFlight = (legLabel: string, flightId: string) => {
     setLegResults(prev =>
