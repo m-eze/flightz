@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <circle cx="100" cy="100" r="95" fill="#1e40af"/>
+  <circle cx="100" cy="100" r="85" fill="none" stroke="#60a5fa" stroke-width="2"/>
+  <!-- Eagle silhouette -->
+  <path d="M100 30 L115 70 L140 55 L125 80 L160 90 L125 95 L145 120 L110 105 L110 140 L100 130 L90 140 L90 105 L55 120 L75 95 L40 90 L75 80 L60 55 L85 70 Z" fill="#fbbf24"/>
+  <!-- Star -->
+  <polygon points="100,45 104,58 118,58 107,66 111,79 100,71 89,79 93,66 82,58 96,58" fill="#fff"/>
+  <!-- Text -->
+  <text x="100" y="165" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="18" fill="#fff">ENUGU AIR</text>
+  <text x="100" y="182" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#93c5fd">EST. 2025</text>
+</svg>

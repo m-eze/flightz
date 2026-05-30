@@ -84,6 +84,7 @@ setTimeout(async () => {
       { name: "Allied Air", iata: "LP", icao: "AJK", logo: "/airlines/allied-air.png", hub: "LOS" },
       { name: "K-Impex Airline", iata: "KX", icao: "KXP", logo: "/airlines/kimpex-logo.jpg", hub: "ABV" },
       { name: "Dornier Aviation Nigeria", iata: "DH", icao: "DAV", logo: "/airlines/dornier_aviation-logo.png", hub: "LOS" },
+      { name: "Enugu Air", iata: "E4", icao: "ENU", logo: "/airlines/enugu-air.svg", hub: "ENU" },
     ];
 
     const airlineMap = new Map<string, typeof airlines[number] & { id: string }>();
