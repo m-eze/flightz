@@ -314,7 +314,8 @@ export default function HomePage() {
       </section>
 
       <footer className="border-t border-gray-200 bg-white py-8 text-center text-sm text-gray-400">
-        <p>✈️ NFlightz — Nigeria&apos;s flight booking platform. Built with ❤️</p>
+        <p>✈ NFlightz — Nigeria&apos;s domestic flight booking platform</p>
+        <p className="mt-1 text-xs">Built with ❤ for Nigeria</p>
       </footer>
     </main>
   );

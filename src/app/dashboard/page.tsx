@@ -30,19 +30,16 @@ interface BookingItem {
   tripType: string;
   createdAt: string;
   legs: LegInfo[];
-  flight: LegInfo["flight"] | null; // backward compat
+  flight: LegInfo["flight"] | null;
 }
 
-const tripIcons: Record<string, string> = {
-  oneway: "→",
-  return: "⇄",
-  multistop: "↗",
-};
+const tripIcons: Record<string, string> = { oneway: "→", return: "⇄", multistop: "↗" };
 
-const legBadge = (type: string) => {
-  if (type === "outbound") return "bg-indigo-100 text-indigo-700";
-  if (type === "inbound") return "bg-amber-100 text-amber-700";
-  return "bg-green-100 text-green-700";
+const statusStyle: Record<string, string> = {
+  cancelled: "bg-red-50 text-red-700 border-red-200",
+  paid: "bg-green-50 text-green-700 border-green-200",
+  pending: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  unpaid: "bg-yellow-50 text-yellow-700 border-yellow-200",
 };
 
 export default function DashboardPage() {
@@ -68,30 +65,50 @@ export default function DashboardPage() {
     }
   };
 
-  useEffect(() => {
-    fetchBookings();
-  }, []);
+  useEffect(() => { fetchBookings(); }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     fetchBookings(searchRef);
   };
 
+  const getStatus = (b: BookingItem) => {
+    if (b.status === "cancelled") return "Cancelled";
+    if (b.paymentStatus === "paid") return "Paid";
+    return "Unpaid";
+  };
+
+  const statusClass = (b: BookingItem) => {
+    if (b.status === "cancelled") return statusStyle.cancelled;
+    if (b.paymentStatus === "paid") return statusStyle.paid;
+    return statusStyle.unpaid;
+  };
+
   return (
-    <main className="min-h-screen bg-gray-50 pt-2">
-
-
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <h1 className="text-2xl font-bold mb-2">My Bookings</h1>
-        <p className="text-gray-500 mb-6">View and manage your flight bookings</p>
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">My Bookings</h1>
+            <p className="text-sm text-gray-500 mt-1">View and manage your flight bookings</p>
+          </div>
+        </div>
 
         <form onSubmit={handleSearch} className="flex gap-3 mb-8">
-          <input type="text" value={searchRef} onChange={(e) => setSearchRef(e.target.value)}
-            placeholder="Search by booking reference (e.g. NFL-ABC123)"
-            className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          <button type="submit" className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg text-sm hover:bg-indigo-700 transition">Search</button>
+          <input
+            type="text"
+            value={searchRef}
+            onChange={(e) => setSearchRef(e.target.value)}
+            placeholder="Search by reference (e.g. NFL-ABC123)"
+            className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          />
+          <button type="submit" className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+            Search
+          </button>
           {searchRef && (
-            <button type="button" onClick={() => { setSearchRef(""); fetchBookings(); }} className="text-sm text-gray-500 hover:underline">Clear</button>
+            <button type="button" onClick={() => { setSearchRef(""); fetchBookings(); }} className="text-sm text-gray-500 hover:underline px-2">
+              Clear
+            </button>
           )}
         </form>
 
@@ -100,121 +117,106 @@ export default function DashboardPage() {
         )}
 
         {loading ? (
-          <div className="text-center py-12">
+          <div className="text-center py-16">
             <div className="animate-spin inline-block w-6 h-6 border-4 border-indigo-200 border-t-indigo-600 rounded-full" />
           </div>
         ) : bookings.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <p className="text-4xl mb-3">📋</p>
+          <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+            <div className="text-4xl mb-3">📋</div>
             <h3 className="text-lg font-semibold mb-2">No bookings found</h3>
-            <p className="text-gray-500 mb-4">{searchRef ? "No booking matches this reference" : "You haven't made any bookings yet"}</p>
-            <button onClick={() => router.push("/")} className="text-indigo-600 hover:underline text-sm">Search flights</button>
+            <p className="text-gray-500 mb-4 text-sm">
+              {searchRef ? "No booking matches this reference" : "You haven't made any bookings yet"}
+            </p>
+            <button onClick={() => router.push("/")} className="text-indigo-600 hover:underline text-sm font-medium">
+              Search flights →
+            </button>
           </div>
         ) : (
           <div className="space-y-4">
             {bookings.map((b) => (
-              <div key={b.id} className="bg-white rounded-xl border border-gray-200 p-5">
+              <div key={b.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition">
                 <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold">{b.bookingReference}</p>
-                      <span className="text-xs text-gray-400">{tripIcons[b.tripType] || tripIcons.oneway} {b.tripType}</span>
-                    </div>
-                    <p className="text-xs text-gray-500">Booked {formatDate(b.createdAt)}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      b.status === "cancelled" ? "bg-red-100 text-red-700" :
-                      b.paymentStatus === "paid" ? "bg-green-100 text-green-700" :
-                      "bg-yellow-100 text-yellow-700"
-                    }`}>
-                      {b.status === "cancelled" ? "CANCELLED" : b.paymentStatus === "paid" ? "PAID" : "UNPAID"}
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-sm font-bold bg-gray-50 px-2.5 py-1 rounded">{b.bookingReference}</span>
+                    <span className="text-xs text-gray-400">{tripIcons[b.tripType] || "→"} {b.tripType}</span>
+                    <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${statusClass(b)}`}>
+                      {getStatus(b)}
                     </span>
-                    <button onClick={() => router.push(`/dashboard/${b.id}`)}
-                      className="text-xs text-indigo-600 hover:underline whitespace-nowrap">View →</button>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-indigo-600">{formatPrice(b.totalPrice)}</p>
                   </div>
                 </div>
 
                 {/* Flight legs */}
-                <div className="space-y-2">
+                <div className="space-y-2 mb-3">
                   {b.legs && b.legs.length > 0 ? (
                     b.legs.map((leg, i) => {
                       const f = leg.flight;
                       return (
-                        <div className="p-3 bg-gray-50 rounded-lg flex items-center gap-4" key={i}>
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${legBadge(leg.legType)}`}>
+                        <div key={i} className="bg-gray-50 rounded-lg p-3 flex items-center gap-4">
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                            leg.legType === "outbound" ? "bg-indigo-100 text-indigo-700" :
+                            leg.legType === "return" || leg.legType === "inbound" ? "bg-amber-100 text-amber-700" :
+                            "bg-green-100 text-green-700"
+                          }`}>
                             {leg.legType}
                           </span>
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center gap-2">
                             {f.airline.logo && (
-                              <img
-                                src={f.airline.logo}
-                                alt={`${f.airline.name} logo`}
-                                className="w-6 h-6 object-contain"
-                              />
+                              <img src={f.airline.logo} alt="" className="w-5 h-5 object-contain" />
                             )}
-                            <div>
-                              <div className="font-medium text-sm">{f.airline.name}</div>
-                              <div className="text-xs text-gray-500">{f.flightNumber}</div>
-                            </div>
+                            <span className="text-xs font-medium">{f.airline.name}</span>
+                            <span className="text-xs text-gray-400">{f.flightNumber}</span>
                           </div>
                           <div className="flex-1 flex items-center justify-center gap-2">
-                            <div className="text-right">
-                              <p className="font-bold text-sm">{formatTime(f.departureTime)}</p>
-                              <p className="text-[10px] text-gray-500">{f.origin.code}</p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-[10px] text-gray-400">{formatDuration(f.duration)}</p>
-                              <div className="w-10 h-px bg-gray-300 mx-auto" />
-                            </div>
-                            <div className="text-left">
-                              <p className="font-bold text-sm">{formatTime(f.arrivalTime)}</p>
-                              <p className="text-[10px] text-gray-500">{f.destination.code}</p>
-                            </div>
+                            <span className="text-sm font-bold">{formatTime(f.departureTime)}</span>
+                            <span className="text-xs text-gray-400">{f.origin.code}</span>
+                            <div className="w-6 h-px bg-gray-300" />
+                            <svg className="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                            </svg>
+                            <div className="w-6 h-px bg-gray-300" />
+                            <span className="text-xs text-gray-400">{f.destination.code}</span>
+                            <span className="text-sm font-bold">{formatTime(f.arrivalTime)}</span>
                           </div>
-                          <div className="text-xs text-gray-400">{formatDate(f.departureTime)}</div>
+                          <span className="text-xs text-gray-400">{formatDate(f.departureTime)}</span>
                         </div>
                       );
                     })
                   ) : b.flight ? (
-                    /* Backward compat: single flight */
-                    <div className="p-3 bg-gray-50 rounded-lg flex items-center gap-4">
-                      <div className="flex items-center space-x-3">
+                    <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-4">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase bg-indigo-100 text-indigo-700">
+                        flight
+                      </span>
+                      <div className="flex items-center gap-2">
                         {b.flight.airline.logo && (
-                          <img
-                            src={b.flight.airline.logo}
-                            alt={`${b.flight.airline.name} logo`}
-                            className="w-6 h-6 object-contain"
-                          />
+                          <img src={b.flight.airline.logo} alt="" className="w-5 h-5 object-contain" />
                         )}
-                        <div>
-                          <div className="font-medium text-sm">{b.flight.airline.name}</div>
-                          <div className="text-xs text-gray-500">{b.flight.flightNumber}</div>
-                        </div>
+                        <span className="text-xs font-medium">{b.flight.airline.name}</span>
+                        <span className="text-xs text-gray-400">{b.flight.flightNumber}</span>
                       </div>
                       <div className="flex-1 flex items-center justify-center gap-2">
-                        <div className="text-right">
-                          <p className="font-bold text-sm">{formatTime(b.flight.departureTime)}</p>
-                          <p className="text-[10px] text-gray-500">{b.flight.origin.code}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-[10px] text-gray-400">{formatDuration(b.flight.duration)}</p>
-                          <div className="w-10 h-px bg-gray-300 mx-auto" />
-                        </div>
-                        <div className="text-left">
-                          <p className="font-bold text-sm">{formatTime(b.flight.arrivalTime)}</p>
-                          <p className="text-[10px] text-gray-500">{b.flight.destination.code}</p>
-                        </div>
+                        <span className="text-sm font-bold">{formatTime(b.flight.departureTime)}</span>
+                        <span className="text-xs text-gray-400">{b.flight.origin.code}</span>
+                        <div className="w-6 h-px bg-gray-300" />
+                        <svg className="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                        </svg>
+                        <div className="w-6 h-px bg-gray-300" />
+                        <span className="text-xs text-gray-400">{b.flight.destination.code}</span>
+                        <span className="text-sm font-bold">{formatTime(b.flight.arrivalTime)}</span>
                       </div>
+                      <span className="text-xs text-gray-400">{formatDate(b.flight.departureTime)}</span>
                     </div>
                   ) : null}
                 </div>
 
-                <div className="mt-3 flex justify-between items-center">
-                  <div className="text-xs text-gray-500">
-                    {b.passengerName} · {b.passengerEmail}
-                  </div>
-                  <p className="font-bold text-indigo-600">{formatPrice(b.totalPrice)}</p>
+                <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-100">
+                  <span>{b.passengerName} · {b.passengers} pax · Booked {formatDate(b.createdAt)}</span>
+                  <button onClick={() => router.push(`/dashboard/${b.id}`)} className="text-indigo-600 hover:underline font-medium">
+                    View →
+                  </button>
                 </div>
               </div>
             ))}
