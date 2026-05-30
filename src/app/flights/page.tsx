@@ -280,221 +280,205 @@ function FlightsPageContent() {
     );
   }
 
+  // Get unique airlines for filter
+  const allAirlines = legResults.length > 0
+    ? Array.from(
+        new Map(
+          legResults
+            .flatMap(leg => leg.flights)
+            .filter((f): f is Flight & { airline: Airline } => f.airline !== null)
+            .map(f => [f.airline.id, f.airline] as const)
+        ).values()
+      )
+    : [];
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full" />
-      </div>
-    );
-  }
+      <main className="min-h-screen bg-gray-50 pb-12">
 
-  // Get unique airlines for filter
-  const allAirlines = Array.from(
-    new Map(
-      legResults
-        .flatMap(leg => leg.flights)
-        .filter((f): f is Flight & { airline: Airline } => f.airline !== null)
-        .map(f => [f.airline.id, f.airline] as const)
-    ).values()
-  );
+        {/* Search Form */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <h1 className="text-2xl font-bold text-center mb-6">Find Your Flight</h1>
 
-  return (
-    <main className="min-h-screen bg-gray-50">
+            <form onSubmit={e => e.preventDefault()} className="space-y-5">
 
-      {/* Search Form */}
-      <div className="py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h1 className="text-3xl font-bold text-center mb-6">
-              Find Your Flight
-            </h1>
-            <form onSubmit={e => e.preventDefault()} className="space-y-6">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    From
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={searchParams.get("from") || ""}
-                      onChange={e => {
-                        const url = new URL(window.location.href);
-                        url.searchParams.set("from", e.target.value);
-                        window.history.replaceState({}, "", url.toString());
-                      }}
-                      placeholder="Enter airport or city"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                    <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                      {searchParams.get("from") && (
-                        <button
-                          onClick={() => {
-                            const url = new URL(window.location.href);
-                            url.searchParams.delete("from");
-                            window.history.replaceState({}, "", url.toString());
-                          }}
-                          className="text-gray-400 hover:text-gray-600"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    To
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={searchParams.get("to") || ""}
-                      onChange={e => {
-                        const url = new URL(window.location.href);
-                        url.searchParams.set("to", e.target.value);
-                        window.history.replaceState({}, "", url.toString());
-                      }}
-                      placeholder="Enter airport or city"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                    <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                      {searchParams.get("to") && (
-                        <button
-                          onClick={() => {
-                            const url = new URL(window.location.href);
-                            url.searchParams.delete("to");
-                            window.history.replaceState({}, "", url.toString());
-                          }}
-                          className="text-gray-400 hover:text-gray-600"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
+              {/* Trip Type */}
+              <div className="flex justify-center gap-2">
+                {(["oneway", "return", "multistop"] as const).map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => {
+                      const url = new URL(window.location.href);
+                      url.searchParams.set("trip", t);
+                      if (t !== "return") url.searchParams.delete("return");
+                      window.history.replaceState({}, "", url.toString());
+                    }}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                      tripType === t
+                        ? "bg-indigo-600 text-white shadow-md"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {t === "oneway" ? "One Way" : t === "return" ? "Return" : "Multi-City"}
+                  </button>
+                ))}
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-3">
+              {/* From / To / Dates */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Departure Date
+                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">From</label>
+                  <input
+                    type="text"
+                    value={from}
+                    onChange={e => {
+                      const url = new URL(window.location.href);
+                      url.searchParams.set("from", e.target.value.toUpperCase());
+                      window.history.replaceState({}, "", url.toString());
+                    }}
+                    placeholder="City or airport"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">To</label>
+                  <input
+                    type="text"
+                    value={to}
+                    onChange={e => {
+                      const url = new URL(window.location.href);
+                      url.searchParams.set("to", e.target.value.toUpperCase());
+                      window.history.replaceState({}, "", url.toString());
+                    }}
+                    placeholder="City or airport"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">
+                    {tripType === "return" ? "Depart" : "Date"}
                   </label>
                   <input
                     type="date"
                     min={new Date().toISOString().split("T")[0]}
-                    value={searchParams.get("depart") || ""}
+                    value={depart}
                     onChange={e => {
                       const url = new URL(window.location.href);
                       url.searchParams.set("depart", e.target.value);
                       window.history.replaceState({}, "", url.toString());
                     }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Passengers
-                  </label>
-                  <select
-                    value={pax.toString()}
-                    onChange={e => {
-                      const url = new URL(window.location.href);
-                      url.searchParams.set("pax", e.target.value);
-                      window.history.replaceState("", "", url.toString());
-                    }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                      <option key={num} value={num.toString()}>
-                        {num} passenger{num > 1 ? "s" : ""}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sort By
-                  </label>
-                  <select
-                    value={sortBy}
-                    onChange={e => {
-                      setSortBy(e.target.value as "price" | "duration" | "departure");
-                    }}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="price">Price (low to high)</option>
-                    <option value="duration">Duration (shortest first)</option>
-                    <option value="departure">Departure time (earliest first)</option>
-                  </select>
-                </div>
+                {tripType === "return" && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Return</label>
+                    <input
+                      type="date"
+                      min={depart || new Date().toISOString().split("T")[0]}
+                      value={returnDate}
+                      onChange={e => {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set("return", e.target.value);
+                        window.history.replaceState({}, "", url.toString());
+                      }}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
+                    />
+                  </div>
+                )}
+                {tripType !== "return" && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Passengers</label>
+                    <select
+                      value={pax}
+                      onChange={e => {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set("pax", e.target.value);
+                        window.history.replaceState({}, "", url.toString());
+                      }}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
+                    >
+                      {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                        <option key={n} value={n}>{n} passenger{n > 1 ? "s" : ""}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
-              <div className="pt-4 border-t">
-                <h2 className="font-semibold text-sm mb-3">Airlines</h2>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input
-                      type="radio"
-                      name="airline"
-                      value=""
-                      checked={airlineFilter === ""}
+              {/* Sort + Passengers (return) + Airlines filter */}
+              <div className="grid gap-4 sm:grid-cols-3 items-end">
+                {tripType === "return" && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Passengers</label>
+                    <select
+                      value={pax}
                       onChange={e => {
-                        setAirlineFilter(e.target.value as string);
+                        const url = new URL(window.location.href);
+                        url.searchParams.set("pax", e.target.value);
+                        window.history.replaceState({}, "", url.toString());
                       }}
-                      className="text-indigo-600"
-                    />
-                    All Airlines
-                  </label>
-                  {allAirlines.map(a => (
-                    <label key={a.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input
-                        type="radio"
-                        name="airline"
-                        value={a.id}
-                        checked={airlineFilter === a.id}
-                        onChange={e => {
-                          setAirlineFilter(e.target.value as string);
-                        }}
-                        className="text-indigo-600"
-                      />
-                      <div className="flex items-center space-x-2">
-                        {a.logo && (
-                          <img
-                            src={a.logo}
-                            alt={`${a.name} logo`}
-                            className="w-5 h-5 object-contain"
-                          />
-                        )}
-                        <span>{a.name}</span>
-                      </div>
-                    </label>
-                  ))}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
+                    >
+                      {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                        <option key={n} value={n}>{n} passenger{n > 1 ? "s" : ""}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Sort By</label>
+                  <select
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
+                  >
+                    <option value="price">Price (low to high)</option>
+                    <option value="duration">Duration (shortest)</option>
+                    <option value="departure">Departure (earliest)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Airline</label>
+                  <select
+                    value={airlineFilter}
+                    onChange={e => setAirlineFilter(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
+                  >
+                    <option value="">All Airlines</option>
+                    {allAirlines.map(a => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </form>
           </div>
         </div>
-      </div>
 
-      {/* Results */}
-      {legResults.length > 0 && (
-        <div className="py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="space-y-6">
-              {legResults.map((leg, index) => (
+        {/* Results */}
+        {legResults.length > 0 && (
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+            <div className="space-y-8">
+              {legResults.map((leg) => (
                 <div key={leg.label} className="bg-white rounded-xl shadow-md overflow-hidden">
-                  <div className="bg-gray-50 px-6 py-4">
-                    <h2 className="text-lg font-semibold mb-2">
-                      {leg.label}
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      {leg.date}
-                    </p>
+                  <div className="bg-gray-50 px-5 py-3 border-b flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold">{leg.label}</h2>
+                      <p className="text-sm text-gray-500">{leg.date}</p>
+                    </div>
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase ${
+                      leg.label === "Outbound" ? "bg-indigo-100 text-indigo-700" :
+                      leg.label === "Return" ? "bg-amber-100 text-amber-700" :
+                      "bg-green-100 text-green-700"
+                    }`}>
+                      {leg.from} → {leg.to}
+                    </span>
                   </div>
-                  <div className="divide-y divide-gray-200">
-                    {leg.flights.map((flight, idx) => (
+                  <div className="divide-y divide-gray-100">
+                    {leg.flights.map((flight) => (
                       <FlightCard
                         key={flight.id}
                         flight={flight}
@@ -507,85 +491,38 @@ function FlightsPageContent() {
               ))}
             </div>
 
-            {allSelected && legResults.length > 0 && (
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <div className="mb-4">
-                  <h2 className="text-xl font-bold text-center">
-                    Total Price:
-                  </h2>
-                  <p className="text-3xl font-bold text-indigo-600 text-center">
-                    {formatPrice(
-                      getSelectedFlights().reduce((sum, f) => sum + f.price, 0) *
-                        pax
-                    )}
+            {/* Continue */}
+            {allSelected && (
+              <div className="sticky bottom-0 mt-8 bg-white rounded-xl shadow-lg border p-5 flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">Total for {pax} passenger{pax > 1 ? "s" : ""}</p>
+                  <p className="text-2xl font-bold text-indigo-600">
+                    {formatPrice(getSelectedFlights().reduce((sum, f) => sum + f.price, 0) * pax)}
                   </p>
                 </div>
-
-                <div className="flex justify-center">
-                  <button
-                    onClick={handleContinue}
-                    disabled={!allSelected}
-                    className={`bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-lg transition ${
-                      !allSelected ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
-                  >
-                    Continue to Booking
-                  </button>
-                </div>
+                <button
+                  onClick={handleContinue}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-lg transition shadow-md"
+                >
+                  Continue to Booking
+                </button>
               </div>
             )}
+            {allSelected && <div className="h-4" />}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Empty state */}
-      {legResults.length === 0 && !loading && !error && (
-        <div className="py-12 text-center">
-          <div className="max-w-2xl mx-auto px-4">
+        {/* Empty state */}
+        {legResults.length === 0 && !loading && !error && (
+          <div className="py-16 text-center">
             <div className="text-5xl text-gray-300 mb-4">✈️</div>
-            <h2 className="text-2xl font-bold text-center mb-2">
-              No flights found
-            </h2>
-            <p className="text-lg text-gray-600 text-center mb-6">
-              Try changing your search criteria or check back later for more flights.
+            <h2 className="text-2xl font-bold text-center mb-2">No flights found</h2>
+            <p className="text-gray-500 max-w-md mx-auto">
+              Try changing your search criteria, dates, or airline filter.
             </p>
-            <div className="flex justify-center space-x-4">
-              <button
-                onClick={() => {
-                  const url = new URL(window.location.href);
-                  url.searchParams.delete("from");
-                  url.searchParams.delete("to");
-                  url.searchParams.delete("depart");
-                  window.history.replaceState({}, "", url.toString());
-                }}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-sm rounded"
-              >
-                Clear Search
-              </button>
-              <button
-                onClick={() => {
-                  const url = new URL(window.location.href);
-                  url.searchParams.set(
-                    "from",
-                    searchParams.get("to") || "LOS"
-                  );
-                  url.searchParams.set(
-                    "to",
-                    searchParams.get("from") || "ABV"
-                  );
-                  window.history.replaceState({}, "", url.toString());
-                }}
-                className="px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-600 text-sm rounded"
-              >
-                Swap Routes
-              </button>
-            </div>
           </div>
-        </div>
-      )}
-
-      {/* Padding for fixed bottom bar on mobile */}
-      {allSelected && <div className="h-20" />}
-    </main>
-  );
+        )}
+      </main>
+    );
+  }
 }
